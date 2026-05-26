@@ -118,12 +118,14 @@ jobs:
           echo "⚠️ remove-minimal.xml missing from track path. Syncing targets downstream..."
           repo sync -c --force-sync --no-clone-bundle --no-tags -j$(nproc --all) external/guava external/gflags
         fi
+
     - name: Clone Device Tree
       run: |
         cd ${GITHUB_WORKSPACE}/OrangeFox/fox_${{ inputs.MANIFEST_BRANCH }}
         git clone ${{ inputs.DEVICE_TREE }} -b ${{ inputs.DEVICE_TREE_BRANCH }} ./${{ inputs.DEVICE_PATH }}
         cd ${{ inputs.DEVICE_PATH }}
         echo "COMMIT_ID=$(git rev-parse HEAD)" >> $GITHUB_ENV
+
     - name: Building OrangeFox
       run: |
         cd ${GITHUB_WORKSPACE}/OrangeFox/fox_${{ inputs.MANIFEST_BRANCH }}
@@ -131,26 +133,31 @@ jobs:
         source build/envsetup.sh
         export ALLOW_MISSING_DEPENDENCIES=true
         set -e
+
         if [ "${{ inputs.MANIFEST_BRANCH }}" = "12.1" ];
         then
           echo "Building for 12.1"
           lunch twrp_${{ inputs.DEVICE_NAME }}-${{ inputs.BUILD_TYPE }} && make clean && mka ${{ inputs.BUILD_TARGET }}image -j$(nproc --all)
         fi
+
         if [ "${{ inputs.MANIFEST_BRANCH }}" = "14.1" ];
         then
           echo "Building for 14.1"
           lunch twrp_${{ inputs.DEVICE_NAME }}-ap2a-${{ inputs.BUILD_TYPE }} && make clean && mka ${{ inputs.BUILD_TARGET }}image -j$(nproc --all)
         fi
+
     - name: Set Release Properties
       run: |
         echo "BUILD_DATE=$(TZ=Asia/Manila date +%Y%m%d)" >> $GITHUB_ENV
         cd ${GITHUB_WORKSPACE}/OrangeFox/fox_${{ inputs.MANIFEST_BRANCH }}
+
         DEVICE_TREE_URL="${{ inputs.DEVICE_TREE }}"
         if [[ "${DEVICE_TREE_URL}" == *.git ]];
         then
           DEVICE_TREE_URL="${DEVICE_TREE_URL%.git}"
         fi
         echo "DEVICE_TREE_URL=${DEVICE_TREE_URL}" >> $GITHUB_ENV
+
     - name: Upload to Release
       uses: softprops/action-gh-release@v2
       with:
