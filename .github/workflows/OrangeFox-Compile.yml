@@ -90,10 +90,13 @@ jobs:
       
     - name: Build Environment
       run: |
-        sudo apt install aria2 -y
+        sudo apt update && sudo apt install aria2 curl -y
         git clone https://gitlab.com/OrangeFox/misc/scripts.git -b master
         cd scripts
         sudo bash setup/android_build_env.sh
+        # Ensure the repo tracking binary remains globally persistent across isolated step shells
+        sudo curl https://storage.googleapis.com/git-repo-downloads/repo -o /usr/local/bin/repo
+        sudo chmod a+rx /usr/local/bin/repo
       
     - name: Set-up Manifest
       run: |
@@ -103,21 +106,10 @@ jobs:
         git config --global user.email "${{ github.actor_id }}+${{ github.actor }}@users.noreply.github.com"
         git clone https://gitlab.com/OrangeFox/sync.git -b master
         cd sync
-        ./orangefox_sync.sh --branch ${{ inputs.MANIFEST_BRANCH }} --path ${GITHUB_WORKSPACE}/OrangeFox/fox_${{ inputs.MANIFEST_BRANCH }}  
-        
-        cd ${GITHUB_WORKSPACE}/OrangeFox/fox_${{ inputs.MANIFEST_BRANCH }}
-        
-        # Native Manifest Patching Fix (Correcting GitHub Runner environment)
-        if [ -f .repo/manifests/remove-minimal.xml ]; then
-          echo "✅ Found remove-minimal.xml. Stripping blocks natively..."
-          sed -i '/guava/d' .repo/manifests/remove-minimal.xml
-          sed -i '/gflags/d' .repo/manifests/remove-minimal.xml
-          echo "✅ Manifest patched. Synchronizing official tree components..."
-          repo sync -c --force-sync --no-clone-bundle --no-tags -j$(nproc --all) external/guava external/gflags
-        else
-          echo "⚠️ remove-minimal.xml missing from track path. Syncing targets downstream..."
-          repo sync -c --force-sync --no-clone-bundle --no-tags -j$(nproc --all) external/guava external/gflags
-        fi
+        # Sanitize line endings and formatting structural bugs instantly
+        sed -i 's/\r$//' orangefox_sync.sh
+        chmod +x orangefox_sync.sh
+        bash orangefox_sync.sh --branch ${{ inputs.MANIFEST_BRANCH }} --path ${GITHUB_WORKSPACE}/OrangeFox/fox_${{ inputs.MANIFEST_BRANCH }}
 
     - name: Clone Device Tree
       run: |
@@ -133,17 +125,15 @@ jobs:
         source build/envsetup.sh
         export ALLOW_MISSING_DEPENDENCIES=true
         set -e
-
-        if [ "${{ inputs.MANIFEST_BRANCH }}" = "12.1" ];
-        then
+        
+        if [ "${{ inputs.MANIFEST_BRANCH }}" = "12.1" ]; then
           echo "Building for 12.1"
-          lunch twrp_${{ inputs.DEVICE_NAME }}-${{ inputs.BUILD_TYPE }} && make clean && mka ${{ inputs.BUILD_TARGET }}image -j$(nproc --all)
+          lunch twrp_${{ inputs.DEVICE_NAME }}-eng && make clean && mka adbd ${{ inputs.BUILD_TARGET }}image
         fi
-
-        if [ "${{ inputs.MANIFEST_BRANCH }}" = "14.1" ];
-        then
+        
+        if [ "${{ inputs.MANIFEST_BRANCH }}" = "14.1" ]; then
           echo "Building for 14.1"
-          lunch twrp_${{ inputs.DEVICE_NAME }}-ap2a-${{ inputs.BUILD_TYPE }} && make clean && mka ${{ inputs.BUILD_TARGET }}image -j$(nproc --all)
+          lunch twrp_${{ inputs.DEVICE_NAME }}-ap2a-eng && make clean && mka adbd ${{ inputs.BUILD_TARGET }}image
         fi
 
     - name: Set Release Properties
@@ -152,8 +142,7 @@ jobs:
         cd ${GITHUB_WORKSPACE}/OrangeFox/fox_${{ inputs.MANIFEST_BRANCH }}
 
         DEVICE_TREE_URL="${{ inputs.DEVICE_TREE }}"
-        if [[ "${DEVICE_TREE_URL}" == *.git ]];
-        then
+        if [[ "${DEVICE_TREE_URL}" == *.git ]]; then
           DEVICE_TREE_URL="${DEVICE_TREE_URL%.git}"
         fi
         echo "DEVICE_TREE_URL=${DEVICE_TREE_URL}" >> $GITHUB_ENV
@@ -180,4 +169,3 @@ jobs:
           Build: fox_${{ inputs.MANIFEST_BRANCH }}
           Device: [Device Tree/Branch](${{ env.DEVICE_TREE_URL }}/tree/${{ inputs.DEVICE_TREE_BRANCH }})
           Commit: Most recent [commit](${{ env.DEVICE_TREE_URL }}/commit/${{ env.COMMIT_ID }}) during building.
-          
