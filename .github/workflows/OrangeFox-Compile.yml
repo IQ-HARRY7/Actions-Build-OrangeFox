@@ -94,9 +94,8 @@ jobs:
         git clone https://gitlab.com/OrangeFox/misc/scripts.git -b master
         cd scripts
         sudo bash setup/android_build_env.sh
-        # Ensure the repo tracking binary remains globally persistent across isolated step shells
-        sudo curl https://storage.googleapis.com/git-repo-downloads/repo -o /usr/local/bin/repo
-        sudo chmod a+rx /usr/local/bin/repo
+        sed -i 's/export PATH=~/bin:$PATH//g' ~/.bashrc
+        echo "export PATH=~/bin:\$PATH" >> ~/.bashrc
       
     - name: Set-up Manifest
       run: |
@@ -104,11 +103,19 @@ jobs:
         cd ${GITHUB_WORKSPACE}/OrangeFox
         git config --global user.name "${{ github.actor }}"
         git config --global user.email "${{ github.actor_id }}+${{ github.actor }}@users.noreply.github.com"
+        
+        # Ensure repo tool is explicitly available globally to prevent script expansion panic
+        sudo curl https://storage.googleapis.com/git-repo-downloads/repo -o /usr/local/bin/repo
+        sudo chmod a+rx /usr/local/bin/repo
+        
         git clone https://gitlab.com/OrangeFox/sync.git -b master
         cd sync
-        # Sanitize line endings and formatting structural bugs instantly
+        
+        # Strip trailing carriage returns (\r) to completely prevent unexpected token chokes
         sed -i 's/\r$//' orangefox_sync.sh
         chmod +x orangefox_sync.sh
+        
+        # Force execution with bash interpreter to native-handle arrays and structural loops
         bash orangefox_sync.sh --branch ${{ inputs.MANIFEST_BRANCH }} --path ${GITHUB_WORKSPACE}/OrangeFox/fox_${{ inputs.MANIFEST_BRANCH }}
 
     - name: Clone Device Tree
@@ -147,14 +154,6 @@ jobs:
         fi
         echo "DEVICE_TREE_URL=${DEVICE_TREE_URL}" >> $GITHUB_ENV
 
-    - name: 📦 Save Compiled Recovery Build as Artifact
-      uses: actions/upload-artifact@v4
-      with:
-        name: OrangeFox_Build_Files
-        path: |
-          OrangeFox/fox_${{ inputs.MANIFEST_BRANCH }}/out/target/product/${{ inputs.DEVICE_NAME }}/OrangeFox*.img
-          OrangeFox/fox_${{ inputs.MANIFEST_BRANCH }}/out/target/product/${{ inputs.DEVICE_NAME }}/OrangeFox*.zip
-          
     - name: Upload to Release
       uses: softprops/action-gh-release@v2
       with:
