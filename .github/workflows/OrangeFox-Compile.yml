@@ -143,7 +143,7 @@ jobs:
         if [ "${{ inputs.MANIFEST_BRANCH }}" = "14.1" ];
         then
           echo "Building for 14.1"
-          lunch twrp_${{ inputs.DEVICE_NAME }}-ap2a-${{ inputs.BUILD_TYPE }} && make clean && mka ${{ inputs.BUILD_TARGET }}image -j$(nproc --all)
+          lunch twrp_${{ inputs.DEVICE_NAME }}-ap2a-${{ inputs.BUILD_TYPE }} && make clean && mka adbd ${{ inputs.BUILD_TARGET }}image -j$(nproc --all)
         fi
 
     - name: Set Release Properties
