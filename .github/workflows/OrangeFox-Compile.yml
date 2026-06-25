@@ -36,6 +36,7 @@ on:
         - Atharv
         - khargosxh
         - manus
+        - manus_1
       DEVICE_PATH:
         description: 'Specify your Device Path'
         required: true
