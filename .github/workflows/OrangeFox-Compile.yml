@@ -1,9 +1,9 @@
 name: OrangeFox - Build
 
 # Credits to:
-# https://github.com/TeamWin
-# https://gitlab.com/OrangeFox
-# https://github.com/azwhikaru for Recovery Builder Template
+# https://github.com
+# https://gitlab.com
+# https://github.com for Recovery Builder Template
 # And all Contributors in every repositories I used
 
 on:
@@ -12,7 +12,7 @@ on:
       MANIFEST_BRANCH:
         description: 'OrangeFox Manifest Branch'
         required: true
-        default: '12.1'
+        default: '14.1'
         type: choice
         options:
         - 12.1
@@ -20,7 +20,7 @@ on:
       DEVICE_TREE:
         description: 'OrangeFox Device Tree'
         required: true
-        default: 'https://github.com/ChimpanziCloud/android_device_motorola_vienna.git'
+        default: 'https://github.com'
       DEVICE_TREE_BRANCH:
         description: 'OrangeFox Device Tree Branch'
         required: true
@@ -93,23 +93,30 @@ jobs:
     - name: Build Environment
       run: |
         sudo apt install aria2 -y
-        git clone https://gitlab.com/OrangeFox/misc/scripts.git -b master
+        git clone https://gitlab.com/misc/scripts.git -b master
         cd scripts
         sudo bash setup/android_build_env.sh
+
+    - name: Cache Ccache Build Outputs
+      uses: actions/cache@v4
+      with:
+        path: ~/.ccache
+        key: orangefox-${{ inputs.MANIFEST_BRANCH }}-${{ inputs.DEVICE_NAME }}-${{ github.run_id }}
+        restore-keys: |
+          orangefox-${{ inputs.MANIFEST_BRANCH }}-${{ inputs.DEVICE_NAME }}-
       
     - name: Set-up Manifest
       run: |
         mkdir -p ${GITHUB_WORKSPACE}/OrangeFox
         cd ${GITHUB_WORKSPACE}/OrangeFox
         git config --global user.name "${{ github.actor }}"
-        git config --global user.email "${{ github.actor_id }}+${{ github.actor }}@users.noreply.github.com"
-        git clone https://gitlab.com/OrangeFox/sync.git -b master
+        git config --global user.email "${{ github.actor_id }}+${{ github.actor }}@://github.com"
+        git clone https://gitlab.com/sync.git -b master
         cd sync
         ./orangefox_sync.sh --branch ${{ inputs.MANIFEST_BRANCH }} --path ${GITHUB_WORKSPACE}/OrangeFox/fox_${{ inputs.MANIFEST_BRANCH }}  
         
         cd ${GITHUB_WORKSPACE}/OrangeFox/fox_${{ inputs.MANIFEST_BRANCH }}
         
-        # Native Manifest Patching Fix (Correcting GitHub Runner environment)
         if [ -f .repo/manifests/remove-minimal.xml ]; then
           echo "✅ Found remove-minimal.xml. Stripping blocks natively..."
           sed -i '/guava/d' .repo/manifests/remove-minimal.xml
@@ -134,18 +141,21 @@ jobs:
         set +e
         source build/envsetup.sh
         export ALLOW_MISSING_DEPENDENCIES=true
+        export USE_CCACHE=1
+        export CCACHE_DIR=~/.ccache
+        ccache -M 30G
         set -e
 
         if [ "${{ inputs.MANIFEST_BRANCH }}" = "12.1" ];
         then
           echo "Building for 12.1"
-          lunch twrp_${{ inputs.DEVICE_NAME }}-${{ inputs.BUILD_TYPE }} && make clean && mka adbd ${{ inputs.BUILD_TARGET }}image -j$(nproc --all)
+          lunch twrp_${{ inputs.DEVICE_NAME }}-${{ inputs.BUILD_TYPE }} && mka adbd ${{ inputs.BUILD_TARGET }}image -j$(nproc --all)
         fi
 
         if [ "${{ inputs.MANIFEST_BRANCH }}" = "14.1" ];
         then
           echo "Building for 14.1"
-          lunch twrp_${{ inputs.DEVICE_NAME }}-ap2a-${{ inputs.BUILD_TYPE }} && make clean && mka adbd ${{ inputs.BUILD_TARGET }}image -j$(nproc --all)
+          lunch twrp_${{ inputs.DEVICE_NAME }}-ap2a-${{ inputs.BUILD_TYPE }} && mka adbd ${{ inputs.BUILD_TARGET }}image -j$(nproc --all)
         fi
 
     - name: Set Release Properties
