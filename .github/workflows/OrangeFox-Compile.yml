@@ -28,13 +28,11 @@ on:
         type: choice
         options:
         - main
-        - stable
-        - twrp_12.1
-        - twrp_14.1
+        - master
         - test
-        - tmp
         - Atharv
         - khargosxh
+        - khargosxh_1
         - manus
         - manus_1
       DEVICE_PATH:
