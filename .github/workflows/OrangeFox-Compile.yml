@@ -30,6 +30,7 @@ on:
         - main
         - master
         - test
+        - test_1
         - Atharv
         - khargosxh
         - khargosxh_1
