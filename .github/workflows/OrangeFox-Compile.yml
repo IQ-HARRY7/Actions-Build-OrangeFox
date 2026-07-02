@@ -29,6 +29,7 @@ on:
         options:
         - main
         - master
+        - master_1
         - test
         - test_2
         - Atharv
