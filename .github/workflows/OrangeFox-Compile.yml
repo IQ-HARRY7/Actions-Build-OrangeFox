@@ -30,6 +30,7 @@ on:
         - main
         - master
         - master_1
+        - temp
         - test
         - test_1
         - Atharv
