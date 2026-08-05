@@ -33,7 +33,7 @@ on:
         - temp
         - test
         - test_1
-        - Atharv
+        - latest
         - khargosxh
         - khargosxh_1
         - manus
