@@ -8,10 +8,9 @@ on:
         description: "Select Device Tree repository"
         required: true
         type: choice
-        default: https://github.com/AzzyC/ofox_device_xiaomi_peridot
+        default: https://github.com/IQ-HARRY7/device_xiaomi_beryl_recovery.git
         options:
-          - https://github.com/AzzyC/ofox_device_xiaomi_peridot
-          - https://gitlab.com/OrangeFox/device/peridot_new
+          - https://github.com/IQ-HARRY7/android_device_xiaomi_beryl_recovery.git
 
       device_tree_branch:
         description: "Select Device Tree branch"
@@ -21,7 +20,6 @@ on:
         options:
           - fox_14.1
           - fox_16.0
-          - auto-dfe
 
       notification_mode:
         description: "Select Telegram notification mode"
@@ -44,10 +42,10 @@ jobs:
       MANIFEST_BRANCH: "16.0"
       DEVICE_TREE_URL: ${{ inputs.device_tree_url }}
       DEVICE_TREE_BRANCH: ${{ inputs.device_tree_branch }}
-      DEVICE_PATH: device/xiaomi/peridot
-      DEVICE_NAME: peridot
-      MAKEFILE_NAME: twrp_peridot-bp2a-eng
-      BUILD_TARGET: recovery
+      DEVICE_PATH: device/xiaomi/beryl
+      DEVICE_NAME: beryl
+      MAKEFILE_NAME: twrp_beryl-bp2a-eng
+      BUILD_TARGET: vendorboot
       TELEGRAM_CHAT_ID: ${{ inputs.notification_mode == 'quiet' && '-1002917930475' || '-1001480977582' }}
       TZ: Europe/London
 
