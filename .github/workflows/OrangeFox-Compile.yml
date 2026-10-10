@@ -115,11 +115,7 @@ jobs:
           echo "⚠️ remove-minimal.xml missing from track path. Syncing targets downstream..."
           repo sync -c --force-sync --no-clone-bundle --no-tags -j$(nproc --all) external/guava external/gflags
         fi
-
-    - name: Bypass System SDK Version Check
-      run: |
-       sed -i 's/_unsupported_systemsdk_versions :=.*/_unsupported_systemsdk_versions :=/g' build/make/core/board_config.mk
-     
+        
     - name: Clone Device Tree
       run: |
         cd ${GITHUB_WORKSPACE}/OrangeFox/fox_${{ inputs.MANIFEST_BRANCH }}
