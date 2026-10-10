@@ -22,9 +22,15 @@ on:
         default: 'https://github.com/IQ-HARRY7/device_xiaomi_beryl_recovery.git'
         type: string
       DEVICE_TREE_BRANCH:
-        description: 'Branch containing the beryl device configuration'
+        description: 'OrangeFox Device Tree Branch'
         required: true
-        type: string
+        default: 'fox_14.1'
+        type: choice
+        options:
+        - main
+        - master
+        - fox_14.1
+        - PBRP
       DEVICE_PATH:
         description: 'Device tree path inside the source tree'
         required: true
