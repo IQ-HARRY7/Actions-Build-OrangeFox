@@ -116,6 +116,10 @@ jobs:
           repo sync -c --force-sync --no-clone-bundle --no-tags -j$(nproc --all) external/guava external/gflags
         fi
 
+    - name: Bypass System SDK Version Check
+      run: |
+       sed -i 's/_unsupported_systemsdk_versions :=.*/_unsupported_systemsdk_versions :=/g' build/make/core/board_config.mk
+     
     - name: Clone Device Tree
       run: |
         cd ${GITHUB_WORKSPACE}/OrangeFox/fox_${{ inputs.MANIFEST_BRANCH }}
@@ -169,4 +173,3 @@ jobs:
           Build: fox_${{ inputs.MANIFEST_BRANCH }}
           Device: [Device Tree/Branch](${{ env.DEVICE_TREE_URL }}/tree/${{ inputs.DEVICE_TREE_BRANCH }})
           Commit: Most recent [commit](${{ env.DEVICE_TREE_URL }}/commit/${{ env.COMMIT_ID }}) during building.
-          
